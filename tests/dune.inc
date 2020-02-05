@@ -45,8 +45,22 @@
 (alias (name runtest) (deps (alias completion-infix)))
 
 (alias
+ (name completion-keyword)
+ (deps (:t ./test-dirs/completion/keyword.t)
+       (source_tree ./test-dirs/completion)
+       %{bin:ocamlmerlin}
+       %{bin:ocamlmerlin-server})
+ (action
+   (chdir ./test-dirs/completion
+     (setenv MERLIN %{exe:merlin-wrapper}
+     (setenv OCAMLC %{ocamlc}
+       (progn
+         (run %{bin:mdx} test --syntax=cram %{t})
+         (diff? %{t} %{t}.corrected)))))))
+(alias (name runtest) (deps (alias completion-keyword)))
+
+(alias
  (name completion-parenthesize_from_411)(enabled_if (>= %{ocaml_version} 4.11.0))
- (package merlin)
  (deps (:t ./test-dirs/completion/parenthesize_from_411.t)
        (source_tree ./test-dirs/completion)
        %{bin:ocamlmerlin}
@@ -62,12 +76,10 @@
 
 (alias
  (name completion-parenthesize_pre_411)(enabled_if (< %{ocaml_version} 4.11.0))
- (package merlin)
  (deps (:t ./test-dirs/completion/parenthesize_pre_411.t)
        (source_tree ./test-dirs/completion)
        %{bin:ocamlmerlin}
-       %{bin:ocamlmerlin-server}
-       %{bin:dot-merlin-reader})
+       %{bin:ocamlmerlin-server})
  (action
    (chdir ./test-dirs/completion
      (setenv MERLIN %{exe:merlin-wrapper}
@@ -169,12 +181,10 @@
 
 (alias
  (name destruct-complete)
- (package merlin)
  (deps (:t ./test-dirs/destruct/complete.t)
        (source_tree ./test-dirs/destruct)
        %{bin:ocamlmerlin}
-       %{bin:ocamlmerlin-server}
-       %{bin:dot-merlin-reader})
+       %{bin:ocamlmerlin-server})
  (action
    (chdir ./test-dirs/destruct
      (setenv MERLIN %{exe:merlin-wrapper}
@@ -186,12 +196,10 @@
 
 (alias
  (name destruct-exceptions_pre_408)(enabled_if (< %{ocaml_version} 4.08.0))
- (package merlin)
  (deps (:t ./test-dirs/destruct/exceptions_pre_408.t)
        (source_tree ./test-dirs/destruct)
        %{bin:ocamlmerlin}
-       %{bin:ocamlmerlin-server}
-       %{bin:dot-merlin-reader})
+       %{bin:ocamlmerlin-server})
  (action
    (chdir ./test-dirs/destruct
      (setenv MERLIN %{exe:merlin-wrapper}
@@ -203,12 +211,10 @@
 
 (alias
  (name destruct-exceptions_since_408)(enabled_if (>= %{ocaml_version} 4.08.0))
- (package merlin)
  (deps (:t ./test-dirs/destruct/exceptions_since_408.t)
        (source_tree ./test-dirs/destruct)
        %{bin:ocamlmerlin}
-       %{bin:ocamlmerlin-server}
-       %{bin:dot-merlin-reader})
+       %{bin:ocamlmerlin-server})
  (action
    (chdir ./test-dirs/destruct
      (setenv MERLIN %{exe:merlin-wrapper}
@@ -220,12 +226,10 @@
 
 (alias
  (name destruct-from_val)
- (package merlin)
  (deps (:t ./test-dirs/destruct/from_val.t)
        (source_tree ./test-dirs/destruct)
        %{bin:ocamlmerlin}
-       %{bin:ocamlmerlin-server}
-       %{bin:dot-merlin-reader})
+       %{bin:ocamlmerlin-server})
  (action
    (chdir ./test-dirs/destruct
      (setenv MERLIN %{exe:merlin-wrapper}
@@ -237,12 +241,10 @@
 
 (alias
  (name destruct-issue596)
- (package merlin)
  (deps (:t ./test-dirs/destruct/issue596.t)
        (source_tree ./test-dirs/destruct)
        %{bin:ocamlmerlin}
-       %{bin:ocamlmerlin-server}
-       %{bin:dot-merlin-reader})
+       %{bin:ocamlmerlin-server})
  (action
    (chdir ./test-dirs/destruct
      (setenv MERLIN %{exe:merlin-wrapper}
