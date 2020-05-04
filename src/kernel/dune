@@ -3,6 +3,7 @@
 
 (library
  (name merlin_kernel)
+ (public_name merlin.kernel)
  (wrapped false)
  (flags
   -open Ocaml_utils

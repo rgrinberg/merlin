@@ -5,6 +5,7 @@
   -open Ocaml_parsing
   -open Ocaml_typing
   -open Merlin_utils)
+ (public_name merlin.analysis)
  (libraries
   config
   merlin_specific

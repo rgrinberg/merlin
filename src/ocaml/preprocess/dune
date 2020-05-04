@@ -2,6 +2,7 @@
 
 (library
   (name preprocess)
+  (public_name merlin.preprocess)
   (wrapped false)
   (flags -open Ocaml_parsing -open Ocaml_utils -open Merlin_utils)
   (libraries ocaml_parsing ocaml_utils merlin_utils))
