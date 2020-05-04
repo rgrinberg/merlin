@@ -1,6 +1,7 @@
 (library
  (name merlin_analysis)
  (flags -open Merlin_utils)
+ (public_name merlin.analysis)
  (libraries
   config
   merlin_specific
