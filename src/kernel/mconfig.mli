@@ -24,6 +24,15 @@ type ocaml = {
 
 val dump_ocaml : ocaml -> json
 
+(** {1 Findlib configuration} *)
+
+type findlib = {
+  conf : string option;
+  path : string list;
+  toolchain : string option;
+}
+
+val dump_findlib : findlib -> json
 
 (** {1 Merlin high-level settings} *)
 
@@ -39,15 +48,20 @@ type merlin = {
   protocol    : [`Json | `Sexp];
   log_file    : string option;
   log_sections: string list;
-  config_path : string option;
 
   exclude_query_dir : bool;
 
-  flags_to_apply : string list with_workdir list;
+  flags_to_apply    : string list with_workdir list;
+  packages_to_load  : string list;
 
-  flags_applied : string list with_workdir list;
+  flags_applied    : string list with_workdir list;
+  dotmerlin_loaded : string list;
+  packages_loaded  : string list;
 
-  failures : string list;
+  packages_path : string list;
+  packages_ppx  : Ppxsetup.t;
+
+  failures    : string list;
   extension_to_reader : (string * string) list
 }
 
@@ -66,6 +80,7 @@ type query = {
 
 type t = {
   ocaml   : ocaml;
+  findlib : findlib;
   merlin  : merlin;
   query   : query;
 }
@@ -74,7 +89,7 @@ val initial : t
 
 val dump : t -> json
 
-val get_external_config : string -> t -> t
+val load_dotmerlins : filenames:string list -> t -> t
 
 val normalize : t -> t
 

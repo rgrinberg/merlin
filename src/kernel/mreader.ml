@@ -173,7 +173,6 @@ let parse ?for_completion config source =
 
 (* Update config after parse *)
 
-(*
 let apply_directives config tree =
   let config = ref config in
   let attribute _ attr =
@@ -198,5 +197,3 @@ let apply_directives config tree =
     | `Implementation str -> iterator.structure iterator str
   end;
   !config
-*)
-let apply_directives config _tree = config

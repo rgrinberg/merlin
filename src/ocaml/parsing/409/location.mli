@@ -116,7 +116,7 @@ type report_kind =
   | Report_alert of string
   | Report_alert_as_error of string
 
-type error_source = Lexer | Parser | Typer | Warning | Unknown | Env | Config
+type error_source = Lexer | Parser | Typer | Warning | Unknown | Env
 
 type report = {
   kind : report_kind;

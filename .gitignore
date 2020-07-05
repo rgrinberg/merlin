@@ -10,7 +10,6 @@ dune-workspace
 /ocamlmerlin
 /ocamlmerlin-server
 /ocamlmerlin-lsp
-/dot-merlin-reader
 
 # Ignore garbage files from editors
 *.un~

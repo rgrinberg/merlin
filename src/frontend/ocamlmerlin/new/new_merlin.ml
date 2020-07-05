@@ -83,8 +83,7 @@ let run = function
               (List.map snd spec) raw_args Mconfig.initial command_args
           in
           let config =
-            let failures = !fails @ config.merlin.failures in
-            Mconfig.({config with merlin = {config.merlin with failures}})
+            Mconfig.({config with merlin = {config.merlin with failures = !fails}})
           in
           config, command_args
         in

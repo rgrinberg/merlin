@@ -44,6 +44,7 @@ module Cache = struct
       config.query.filename,
       config.query.directory,
       config.ocaml,
+      config.findlib,
       {config.merlin with log_file = None; log_sections = []}
     )
 

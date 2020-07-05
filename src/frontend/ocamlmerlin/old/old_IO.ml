@@ -86,14 +86,23 @@ let add_or_remove = function
 let with_failures failures assoc = match failures with
   | `Ok -> assoc
   | `Failures failures ->
-    let flags, extensions =
-      List.fold_left failures ~init:([],[]) ~f:(
-        fun (flgs, exts) (str,exn) ->
+    let packages, flags, extensions =
+      List.fold_left failures ~init:([],[],[]) ~f:(
+        fun (pkgs, flgs, exts) (str,exn) ->
+          let str = "\"" ^ str ^ "\"" in
           match exn with
-          | Arg.Bad _ -> str :: flgs, exts
-          | Extension.Unknown -> flgs, str :: exts
-          | _ -> assert false
+          | Fl_package_base.No_such_package _ -> str :: pkgs, flgs, exts
+          | Arg.Bad _ -> pkgs, str :: flgs, exts
+          | Extension.Unknown -> pkgs, flgs, str :: exts
+          | e -> (str ^ " (" ^ Printexc.to_string e ^ ")") :: pkgs, flgs, exts
       )
+    in
+    let packages =
+      match packages with
+      | [] -> []
+      | failures ->
+        let str = String.concat ~sep:", " failures in
+        [ `String ("Failed to load some packages " ^ str) ]
     in
     let flags =
       match flags with
@@ -109,7 +118,7 @@ let with_failures failures assoc = match failures with
         let str = String.concat ~sep:", " failures in
         [ `String ("Unknown extensions " ^ str) ]
     in
-    ("failures", `List (flags @ extensions)) :: assoc
+    ("failures", `List (packages @ flags @ extensions)) :: assoc
 
 let document_of_json =
   let make kind path dot_merlins =
@@ -242,12 +251,7 @@ let json_of_sync_command (type a) (command : a sync_command) (response : a) : js
             "merlin",  `String version
            ]
   | Project_get, (strs, fails) ->
-    let failures = match fails with
-      | `Failures ((_::_) as fails) ->
-        ["failures", `List (List.map ~f:Json.string fails)]
-      | _ -> []
-    in
-    `Assoc (("result", `List (List.map ~f:Json.string strs))::failures)
+    `Assoc (with_failures fails ["result", `List (List.map ~f:Json.string strs)])
   | Idle_job, b -> `Bool b
 
 let classify_response = function

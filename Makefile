@@ -1,4 +1,4 @@
-all: build ocamlmerlin ocamlmerlin-server dot-merlin-reader
+all: build ocamlmerlin ocamlmerlin-server
 
 build:
 	dune build --always-show-command-line
@@ -6,7 +6,7 @@ build:
 workspace:
 	dune build --always-show-command-line --workspace=dune-workspace.template
 
-ocamlmerlin ocamlmerlin-server dot-merlin-reader:
+ocamlmerlin ocamlmerlin-server:
 	ln -s _build/install/default/bin/$@ ./$@
 
 clean:

@@ -49,8 +49,11 @@ let customize config =
   | `Flags flags ->
     let flags_to_apply = [{workdir = config.query.directory; workval = flags}] in
     {config with merlin = {config.merlin with flags_to_apply}}
-  | `Use _pkgs ->
-    config
+  | `Use pkgs ->
+    let packages_to_load =
+      List.filter_dup (pkgs @ config.merlin.packages_to_load)
+    in
+    {config with merlin = {config.merlin with packages_to_load}}
   | `Path (var, action, paths) ->
     let f l = match action with
       | `Add -> List.filter_dup (paths @ l)
@@ -96,14 +99,9 @@ let configure (state : buffer) =
           directory = Misc.canonicalize_filename (Filename.dirname path);
         }
     } in
-  let config =
-    match state.dot_merlins with
-    | Some (first :: _) -> (* ignore anything but the first one... *)
-      Mconfig.get_external_config first config
-    | None | Some [] ->
-      match state.path with
-      | None -> config
-      | Some p -> Mconfig.get_external_config p config
+  let config = Mconfig.load_dotmerlins config
+      ~filenames:(Option.cons (Option.map ~f:Filename.dirname state.path)
+                    (Option.value ~default:[] state.dot_merlins))
   in
   List.fold_left ~f:customize ~init:config state.customization
 
@@ -199,11 +197,9 @@ let dispatch_sync config state (type a) : a sync_command -> a = function
       Mconfig.(config.merlin.flags_to_apply)
 
   | Project_get ->
-    let failures = match  Mconfig.(config.merlin.failures) with
-      | [] -> `Ok
-      | failures -> `Failures failures in
-
-    (Option.cons Mconfig.(config.merlin.config_path) [], failures)
+    let pipeline = make_pipeline config state in
+    let config = Mpipeline.final_config pipeline in
+    (Mconfig.(config.merlin.dotmerlin_loaded), `Ok) (*TODO*)
 
   | Checkout _ -> failwith "invalid arguments"
 

@@ -257,7 +257,6 @@ let json_of_error (error : Location.error) =
         "warning"
     | Location.Unknown -> "unknown"
     | Location.Env     -> "env"
-    | Location.Config     -> "config"
   in
   let content = [
     "type"    , `String typ;
