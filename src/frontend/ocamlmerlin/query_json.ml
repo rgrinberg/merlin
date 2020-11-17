@@ -53,6 +53,7 @@ let dump (type a) : a t -> json =
         | `Values       -> `String "value"
         | `Variants     -> `String "variant"
         | `Keywords     -> `String "keyword"
+        | `Keywords_intf -> `String "keyword-intf"
       ) kind)
   in
   function

@@ -277,6 +277,41 @@ let fold_variant_constructors ~env ~init ~f =
   in
   aux init
 
+let is_intf_keyword = function
+  | "as"
+  | "assert"
+  | "begin"
+  | "do"
+  | "done"
+  | "downto"
+  | "else"
+  | "false"
+  | "for"
+  | "fun"
+  | "function"
+  | "if"
+  | "lazy"
+  | "let"
+  | "match"
+  | "new"
+  | "or"
+  | "rec"
+  | "struct"
+  | "then"
+  | "to"
+  | "true"
+  | "try"
+  | "when"
+  | "while"
+  | "lor"
+  | "lxor"
+  | "mod"
+  | "land"
+  | "lsl"
+  | "lsr"
+  | "asr" -> false
+  | _ -> true
+
 let get_candidates ?get_doc ?target_type ?prefix_path ~keywords ~prefix kind ~validate env branch =
   let cstr_attributes c = c.Types.cstr_attributes in
   let val_attributes v = v.Types.val_attributes in
@@ -426,8 +461,9 @@ let get_candidates ?get_doc ?target_type ?prefix_path ~keywords ~prefix kind ~va
               ~attrs:(lbl_attributes l)
             :: candidates
         ) prefix_path env []
-      | `Keywords ->
-        begin match prefix_path with
+      | ( `Keywords | `Keywords_intf ) as kind ->
+        let candidates keywords =
+          match prefix_path with
           | Some _ -> []
           | None ->
             List.fold_left keywords ~init:[] ~f:(fun candidates kw ->
@@ -436,7 +472,10 @@ let get_candidates ?get_doc ?target_type ?prefix_path ~keywords ~prefix kind ~va
                   :: candidates
                 else
                   candidates)
-        end
+        in
+        match kind with
+        | `Keywords -> candidates keywords
+        | `Keywords_intf -> candidates (List.filter ~f:is_intf_keyword keywords)
     in
     let of_kind_group = function
       | #Query_protocol.Compl.kind as k -> of_kind k
@@ -461,9 +500,9 @@ let completion_order = function
   | `Structure   -> [gen_values; `Types; `Modules; `Modules_type; `Keywords]
   | `Pattern     -> [`Variants; `Constructor; `Modules; `Labels; `Values; `Types; `Modules_type; `Keywords]
   | `Module      -> [`Modules; `Modules_type; `Types; gen_values; `Keywords]
-  | `Module_type -> [`Modules_type; `Modules; `Types; gen_values; `Keywords]
-  | `Signature   -> [`Types; `Modules; `Modules_type; gen_values; `Keywords]
-  | `Type        -> [`Types; `Modules; `Modules_type; gen_values; `Keywords]
+  | `Module_type -> [`Modules_type; `Modules; `Types; gen_values; `Keywords_intf]
+  | `Signature   -> [`Types; `Modules; `Modules_type; gen_values; `Keywords_intf]
+  | `Type        -> [`Types; `Modules; `Modules_type; gen_values; `Keywords_intf]
 
 type kinds = [kind | `Group of kind list] list
 
