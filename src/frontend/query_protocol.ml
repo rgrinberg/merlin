@@ -60,7 +60,6 @@ struct
     | `Values
     | `Variants
     | `Keywords
-    | `Keywords_intf
   ]
 end
 

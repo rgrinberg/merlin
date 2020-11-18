@@ -461,25 +461,32 @@ let get_candidates ?get_doc ?target_type ?prefix_path ~keywords ~prefix kind ~va
               ~attrs:(lbl_attributes l)
             :: candidates
         ) prefix_path env []
-      | ( `Keywords | `Keywords_intf ) as kind ->
-        let candidates keywords =
-          match prefix_path with
-          | Some _ -> []
-          | None ->
-            List.fold_left keywords ~init:[] ~f:(fun candidates kw ->
-                if validate `Keyword `Keyword kw then
-                  make_weighted_candidate ~exact:(kw = prefix) kw `Keyword ~attrs:[]
-                  :: candidates
-                else
-                  candidates)
+      | `Keywords ctx as kind ->
+        let validate =
+          match ctx with
+          | `Impl -> validate
+          | `Intf -> fun a b kw -> is_intf_keyword kw && validate a b kw
         in
-        match kind with
-        | `Keywords -> candidates keywords
-        | `Keywords_intf -> candidates (List.filter ~f:is_intf_keyword keywords)
+        match prefix_path with
+        | Some _ -> []
+        | None ->
+          List.fold_left keywords ~init:[] ~f:(fun candidates kw ->
+              if validate `Keyword `Keyword kw then
+                make_weighted_candidate ~exact:(kw = prefix) kw `Keyword ~attrs:[]
+                :: candidates
+              else
+                candidates)
     in
     let of_kind_group = function
-      | #Query_protocol.Compl.kind as k -> of_kind k
       | `Group kinds -> List.concat_map ~f:of_kind kinds
+      | (`Variants
+        | `Values
+        | `Constructor
+        | `Types
+        | `Modules
+        | `Modules_type
+        | `Labels
+        | `Keywords _) as k -> of_kind k
     in
     try of_kind_group kind
     with exn ->
@@ -496,13 +503,13 @@ let gen_values = `Group [`Values; `Constructor]
 let default_kinds = [ `Variants; gen_values; `Types; `Modules; `Modules_type]
 
 let completion_order = function
-  | `Expression  -> [`Variants; gen_values; `Types; `Modules; `Modules_type; `Keywords]
-  | `Structure   -> [gen_values; `Types; `Modules; `Modules_type; `Keywords]
-  | `Pattern     -> [`Variants; `Constructor; `Modules; `Labels; `Values; `Types; `Modules_type; `Keywords]
-  | `Module      -> [`Modules; `Modules_type; `Types; gen_values; `Keywords]
-  | `Module_type -> [`Modules_type; `Modules; `Types; gen_values; `Keywords_intf]
-  | `Signature   -> [`Types; `Modules; `Modules_type; gen_values; `Keywords_intf]
-  | `Type        -> [`Types; `Modules; `Modules_type; gen_values; `Keywords_intf]
+  | `Expression  -> [`Variants; gen_values; `Types; `Modules; `Modules_type; `Keywords `Impl]
+  | `Structure   -> [gen_values; `Types; `Modules; `Modules_type; `Keywords `Impl]
+  | `Pattern     -> [`Variants; `Constructor; `Modules; `Labels; `Values; `Types; `Modules_type; `Keywords `Impl]
+  | `Module      -> [`Modules; `Modules_type; `Types; gen_values; `Keywords `Impl]
+  | `Module_type -> [`Modules_type; `Modules; `Types; gen_values; `Keywords `Intf]
+  | `Signature   -> [`Types; `Modules; `Modules_type; gen_values; `Keywords `Intf]
+  | `Type        -> [`Types; `Modules; `Modules_type; gen_values; `Keywords `Intf]
 
 type kinds = [kind | `Group of kind list] list
 
@@ -525,6 +532,17 @@ type is_label =
   | `Description of Types.label_description list
   | `Declaration of Types.type_expr * Types.label_declaration list
   ]
+
+let kinds_expand_keywords =
+  List.concat_map ~f:(function
+      | `Keywords -> [`Keywords `Intf; `Keywords `Impl]
+      | (`Labels
+        | `Modules
+        | `Modules_type
+        | `Types
+        | `Values
+        | `Variants
+        | `Constructor) as k -> [k])
 
 let complete_prefix ?get_doc ?target_type ?(kinds=[]) ~prefix ~is_label ~keywords
     config (env,node) branch =
@@ -585,7 +603,7 @@ let complete_prefix ?get_doc ?target_type ?(kinds=[]) ~prefix ~is_label ~keyword
           let kind = classify_node node in
           completion_order kind
         else
-          (kinds : kind list :> kinds)
+          kinds_expand_keywords kinds
       in
       let add_completions acc kind =
         get_candidates ?get_doc ?target_type ?prefix_path ~prefix kind ~keywords ~validate env branch @ acc
@@ -706,7 +724,7 @@ let expand_prefix ~global_modules ?(kinds=[]) ~keywords env prefix =
   let validate _ _ s = validate' s in
   let kinds = match kinds with
     | [] -> default_kinds
-    | kinds -> (kinds : kind list :> kinds)
+    | kinds -> kinds_expand_keywords kinds
   in
   let process_prefix_path prefix_path =
     let candidates =
