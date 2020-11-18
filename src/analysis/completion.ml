@@ -461,7 +461,7 @@ let get_candidates ?get_doc ?target_type ?prefix_path ~keywords ~prefix kind ~va
               ~attrs:(lbl_attributes l)
             :: candidates
         ) prefix_path env []
-      | `Keywords ctx as kind ->
+      | `Keywords ctx ->
         let validate =
           match ctx with
           | `Impl -> validate
