@@ -30,5 +30,6 @@ Printf.ksprintf J.send {|
   (public_name merlin.utils)
   (wrapped false)
   (libraries config merlin_utils)
+  (flags (-open Merlin_utils))
   (modules_without_implementation result_compat))
 |} ver load_path

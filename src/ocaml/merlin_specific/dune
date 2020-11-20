@@ -14,5 +14,6 @@ Printf.ksprintf J.send {|
   (name merlin_specific)
   (public_name merlin.specific)
   (wrapped false)
+  (flags -open Merlin_utils)
   (libraries merlin_utils parsing preprocess typing utils))
 |} ver
