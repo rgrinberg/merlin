@@ -38,3 +38,5 @@ val get_errors : result -> exn list
  *)
 val node_at :
   ?skip_recovered:bool -> result -> Lexing.position -> Mbrowse.t
+
+val initial_env : result -> Env.t
