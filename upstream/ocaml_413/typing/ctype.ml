@@ -1598,7 +1598,7 @@ let expand_abbrev_gen kind find_type_expansion env ty =
             (* For gadts, remember type as non exportable *)
             (* The ambiguous level registered for ty' should be the highest *)
             (* if !trace_gadt_instances then begin *)
-            let scope = Int.max lv ty.scope in
+            let scope = max lv ty.scope in
             update_scope scope ty;
             update_scope scope ty';
             ty'
@@ -2469,7 +2469,7 @@ let add_gadt_equation env source destination =
   else if local_non_recursive_abbrev !env source destination then begin
     let destination = duplicate_type destination in
     let expansion_scope =
-      Int.max (Path.scope source) (get_gadt_equations_level ())
+      max (Path.scope source) (get_gadt_equations_level ())
     in
     let decl =
       new_local_type ~manifest_and_scope:(destination, expansion_scope) () in
@@ -2698,7 +2698,7 @@ and unify2 env t1 t2 =
   let t1' = expand_head_unif !env t1 in
   let t2' = expand_head_unif !env t2 in
   let lv = Int.min t1'.level t2'.level in
-  let scope = Int.max t1'.scope t2'.scope in
+  let scope = max t1'.scope t2'.scope in
   update_level_for Unify !env lv t2;
   update_level_for Unify !env lv t1;
   update_scope_for Unify scope t2;
