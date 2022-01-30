@@ -67,12 +67,12 @@ value ml_merlin_dont_inherit_stdio(value vstatus)
 
 /* Run ppx-command without opening a sub console */
 
-static int windows_system(wchar_t *cmd, wchar_t *cwd)
+static int windows_system(wchar_t *cmd, wchar_t *cwd, DWORD *ret)
 {
     PROCESS_INFORMATION p_info;
     STARTUPINFOW s_info;
     HANDLE hp, p_stderr;
-    DWORD handleInfo, flags, ret, err = ERROR_SUCCESS;
+    DWORD handleInfo, flags, err = ERROR_SUCCESS;
 
     memset(&s_info, 0, sizeof(s_info));
     memset(&p_info, 0, sizeof(p_info));
@@ -114,25 +114,32 @@ static int windows_system(wchar_t *cmd, wchar_t *cwd)
 
     if (err == ERROR_SUCCESS) {
         WaitForSingleObject(p_info.hProcess, INFINITE);
-        GetExitCodeProcess(p_info.hProcess, &ret);
+        GetExitCodeProcess(p_info.hProcess, ret);
         CloseHandle(p_info.hProcess);
         CloseHandle(p_info.hThread);
-        return ret;
     }
  ret:
-    win32_maperr(err);
-    uerror("windows_system", Nothing);
+    return err;
 }
 
 value ml_merlin_system_command(value v_command, value v_cwd)
 {
   CAMLparam2(v_command, v_cwd);
+  DWORD ret, err;
   wchar_t *command = caml_stat_strdup_to_utf16(String_val(v_command));
   wchar_t *cwd = caml_stat_strdup_to_utf16(String_val(v_cwd));
-  int result = windows_system(command, cwd);
-  caml_stat_free((void *) command);
-  caml_stat_free((void *) cwd);
-  CAMLreturn(Val_int(result));
+  caml_release_runtime_system();
+  err = windows_system(command, cwd, &ret);
+  caml_acquire_runtime_system();
+  caml_stat_free(command);
+  caml_stat_free(cwd);
+
+  if (err != ERROR_SUCCESS) {
+    win32_maperr(err);
+    uerror("windows_system", v_command);
+  }
+
+  CAMLreturn(Val_int(ret));
 }
 
 #else
