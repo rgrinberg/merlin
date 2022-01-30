@@ -9,6 +9,8 @@
 #include <caml/mlvalues.h>
 #include <caml/memory.h>
 #include <caml/alloc.h>
+#include <caml/fail.h>
+#include <caml/threads.h>
 #include <stdlib.h>
 
 /* FS case */
@@ -65,7 +67,7 @@ value ml_merlin_dont_inherit_stdio(value vstatus)
 
 /* Run ppx-command without opening a sub console */
 
-static int windows_system(const char *cmd)
+static int windows_system(wchar_t *cmd, wchar_t *cwd)
 {
     PROCESS_INFORMATION p_info;
     STARTUPINFOW s_info;
@@ -101,12 +103,10 @@ static int windows_system(const char *cmd)
     s_info.hStdOutput = s_info.hStdError;
 
     flags = CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT;
-    WCHAR *utf16cmd = caml_stat_strdup_to_utf16(cmd);
-    if (! CreateProcessW(NULL, utf16cmd, NULL, NULL,
-                         TRUE, flags, NULL, NULL, &s_info, &p_info)) {
+    if (! CreateProcessW(NULL, cmd, NULL, NULL,
+                         TRUE, flags, NULL, cwd, &s_info, &p_info)) {
         err = GetLastError();
     }
-    caml_stat_free(utf16cmd);
 
     /* Close the handle if we duplicated it above. */
     if (! (handleInfo & HANDLE_FLAG_INHERIT))
@@ -124,9 +124,15 @@ static int windows_system(const char *cmd)
     uerror("windows_system", Nothing);
 }
 
-value ml_merlin_system_command(value command)
+value ml_merlin_system_command(value v_command, value v_cwd)
 {
-  return Val_int(windows_system(String_val(command)));
+  CAMLparam2(v_command, v_cwd);
+  wchar_t *command = caml_stat_strdup_to_utf16(String_val(v_command));
+  wchar_t *cwd = caml_stat_strdup_to_utf16(String_val(v_cwd));
+  int result = windows_system(command, cwd);
+  caml_stat_free((void *) command);
+  caml_stat_free((void *) cwd);
+  CAMLreturn(Val_int(result));
 }
 
 #else
@@ -137,9 +143,9 @@ value ml_merlin_dont_inherit_stdio(value vstatus)
   return Val_unit;
 }
 
-value ml_merlin_system_command(value command)
+CAMLprim value ml_merlin_system_command(value v_command, value v_cwd)
 {
-  return Val_int(system(String_val(command)));
+  caml_invalid_argument("ml_merlin_system_command is only available on windows");
 }
 
 #endif
