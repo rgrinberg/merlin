@@ -34,15 +34,23 @@ module Cmi = struct
       begin match to_version_opt compiler_magic with
       | None ->
         fprintf ppf
-          "%a@ seems to be compiled with a version of OCaml that is not@.\
-           supported by Merlin."
+          "Compiler version mismatch: this project seems to be compiled with a version of \
+          OCaml compiler that is not supported by the running OCaml LSP. OCaml language \
+          support will not work properly until this problem is fixed. \n\
+          Hint: It seems the project is built with a newer OCaml compiler version \
+          that the running OCaml LSP version doesn't know about. Make sure your \
+          editor runs OCaml LSP that supports this version of compiler. \n\
+          This diagnostic is based on the compiled interface file: %a"
           Location.print_filename filename
       | Some version ->
         fprintf ppf
-          "%a@ seems to be compiled with OCaml %s.@.\
-           But this instance of Merlin handles OCaml %s."
-          Location.print_filename filename version
-          (Option.get @@ to_version_opt Config.cmi_magic_number)
+          "Compiler version mismatch: this project seems to be compiled with OCaml compiler \
+          version %s, but the running OCaml LSP supports OCaml version %s. OCaml language support \
+          will not work properly until this problem is fixed. \n\
+          Hint: Make sure your editor runs OCaml LSP that supports this version of compiler. \n\
+          This diagnostic is based on the compiled interface file: %a"
+          version (Option.get @@ to_version_opt Config.cmi_magic_number)
+          Location.print_filename filename
       end
     | Corrupted_interface filename ->
         fprintf ppf "Corrupted compiled interface@ %a"
