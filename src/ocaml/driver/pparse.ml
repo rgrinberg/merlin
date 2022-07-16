@@ -46,7 +46,23 @@ let merlin_system_command =
     windows_merlin_system_command
   else
     fun cmd ~cwd ->
-      Sys.command (Printf.sprintf "cd %s && %s" (Filename.quote cwd) cmd)
+      let prog = "/bin/sh" in
+      let argv = ["sh"; "-c"; cmd] in
+      let stdin = Unix.openfile "/dev/null" [ Unix.O_RDONLY ] 0x777  in
+      let pid =
+        let cwd : Spawn.Working_dir.t = Path cwd in
+        let stdout = Unix.stderr in
+        Spawn.spawn ~cwd ~prog ~argv ~stdin ~stdout ()
+      in
+      let (_, status) = Unix.waitpid [] pid in
+      let res =
+        match (status : Unix.process_status) with
+        | WEXITED n -> n
+        | WSIGNALED _ -> -1
+        | WSTOPPED _ -> -1
+      in
+      Unix.close stdin;
+      res
 
 let ppx_commandline cmd fn_in fn_out =
   Printf.sprintf "%s %s %s%s"
