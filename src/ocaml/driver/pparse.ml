@@ -46,7 +46,7 @@ let merlin_system_command =
     windows_merlin_system_command
   else
     fun cmd ~cwd ->
-      let prog = "/bin/bash" in
+      let prog = "/bin/sh" in
       let argv = ["sh"; "-c"; cmd] in
       let stdin = Unix.openfile "/dev/null" [ Unix.O_RDONLY ] 0x777  in
       let pid =
